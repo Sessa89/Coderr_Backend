@@ -21,6 +21,8 @@ from user_auth_app.api.views import RegistrationView, CustomLoginView
 from profiles_app.api.views import ProfileDetailView, BusinessProfileListView, CustomerProfileListView
 from offers_app.api.views import OfferListCreateView, OfferRetrieveUpdateDestroyView, OfferDetailRetrieveView
 from orders_app.api.views import OrderListCreateView, OrderRetrieveUpdateDestroyView, OrderCountView, CompletedOrderCountView
+from reviews_app.api.views import ReviewListCreateView, ReviewRetrieveUpdateDestroyView
+from coderr_core.api.views import BaseInfoView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -40,4 +42,9 @@ urlpatterns = [
     path('api/orders/<int:pk>/', OrderRetrieveUpdateDestroyView.as_view(), name='order-detail'),
     path('api/order-count/<int:business_user_id>/', OrderCountView.as_view(), name='order-count'),
     path('api/completed-order-count/<int:business_user_id>/', CompletedOrderCountView.as_view(), name='completed-order-count'),
+
+    path('api/reviews/', ReviewListCreateView.as_view(), name='review-list'),
+    path('api/reviews/<int:pk>/', ReviewRetrieveUpdateDestroyView.as_view(), name='review-detail'),
+
+    path('api/base-info/', BaseInfoView.as_view(), name='base-info'),
 ]

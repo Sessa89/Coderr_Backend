@@ -20,6 +20,7 @@ from django.urls import path
 from user_auth_app.api.views import RegistrationView, CustomLoginView
 from profiles_app.api.views import ProfileDetailView, BusinessProfileListView, CustomerProfileListView
 from offers_app.api.views import OfferListCreateView, OfferRetrieveUpdateDestroyView, OfferDetailRetrieveView
+from orders_app.api.views import OrderListCreateView, OrderRetrieveUpdateDestroyView, OrderCountView, CompletedOrderCountView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -34,4 +35,9 @@ urlpatterns = [
     path('api/offers/', OfferListCreateView.as_view(), name='offer-list-create'),
     path('api/offers/<int:pk>/', OfferRetrieveUpdateDestroyView.as_view(), name='offer-detail'),
     path('api/offerdetails/<int:pk>/', OfferDetailRetrieveView.as_view(), name='offerdetail-detail'),
+
+    path('api/orders/', OrderListCreateView.as_view(), name='order-list'),
+    path('api/orders/<int:pk>/', OrderRetrieveUpdateDestroyView.as_view(), name='order-detail'),
+    path('api/order-count/<int:business_user_id>/', OrderCountView.as_view(), name='order-count'),
+    path('api/completed-order-count/<int:business_user_id>/', CompletedOrderCountView.as_view(), name='completed-order-count'),
 ]

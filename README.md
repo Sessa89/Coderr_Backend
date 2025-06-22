@@ -1,6 +1,6 @@
 # Coderr Backend
 
-![Coderr Logo](logo_icon.svg)
+![Coderr Logo](logo_coderr.svg)
 
 This repository contains the Django REST Framework–based backend for **Coderr**, a simple freelancer platform connecting customers and businesses through offers, orders, and reviews.
 

@@ -1,38 +1,15 @@
 from rest_framework import generics, filters, status
-from rest_framework.permissions import IsAuthenticated, SAFE_METHODS, BasePermission
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.pagination import PageNumberPagination
 
 from ..models import Offer, OfferDetail
 from .serializers import (
     OfferSerializer, OfferDetailSerializer, OfferCreateResponseSerializer, 
     OfferDetailURLSerializer, OfferRetrieveSerializer, OfferPatchResponseSerializer
     )
-
-class IsBusinessUser(BasePermission):
-    message = "Only users with business-profiles are allowed to create an offer."
-
-    def has_permission(self, request, view):
-        if request.method == 'POST':
-            return (
-                request.user.is_authenticated and
-                hasattr(request.user, 'profile') and
-                request.user.profile.type == 'business'
-            )
-        return True
-
-class IsOwnerOrReadOnly(BasePermission):
-    message = "Only the owner is allowed to change or delete."
-
-    def has_object_permission(self, request, view, obj):
-        if request.method in SAFE_METHODS:
-            return True
-        return obj.user == request.user
-
-class OfferPagination(PageNumberPagination):
-    page_size_query_param = 'page_size'
-    page_size = 6
+from .permissions import IsBusinessUser, IsOwnerOrReadOnly
+from .paginations import OfferPagination
 
 class OfferListCreateView(generics.ListCreateAPIView):
     queryset = Offer.objects.prefetch_related('details').all()

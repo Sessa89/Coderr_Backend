@@ -2,36 +2,41 @@ from rest_framework import generics, filters, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Min
 
 from ..models import Offer, OfferDetail
 from .serializers import (
     OfferSerializer, OfferDetailSerializer, OfferCreateResponseSerializer, 
-    OfferDetailURLSerializer, OfferRetrieveSerializer, OfferPatchResponseSerializer
+    OfferDetailURLSerializer, OfferRetrieveSerializer, OfferPatchResponseSerializer,
+    OfferListSerializer
     )
 from .permissions import IsBusinessUser, IsOwnerOrReadOnly
 from .paginations import OfferPagination
+from .filters import OfferFilter
 
 class OfferListCreateView(generics.ListCreateAPIView):
-    queryset = Offer.objects.prefetch_related('details').all()
+    queryset = (Offer.objects
+                .prefetch_related('details')
+                .annotate(
+                    min_price=Min('details__price'), 
+                    min_delivery_time=Min('details__delivery_time_in_days')
+                )
+    )
     permission_classes = [IsBusinessUser]
+    pagination_class   = OfferPagination
     filter_backends    = [
         DjangoFilterBackend,
         filters.SearchFilter,
         filters.OrderingFilter,
     ]
-    filterset_fields   = {
-        'user__id': ['exact'],
-        'details__price': ['gte'],
-        'details__delivery_time_in_days': ['lte'],
-    }
+    filterset_class = OfferFilter
     search_fields      = ['title','description']
-    ordering_fields    = ['updated_at','min_price']
-    pagination_class   = OfferPagination
+    ordering_fields    = ['updated_at','min_price', 'min_delivery_time']
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return OfferCreateResponseSerializer
-        return OfferSerializer
+        return OfferListSerializer
 
     def create(self, request, *args, **kwargs):
         full_serializer = OfferSerializer(data=request.data, context={'request': request})

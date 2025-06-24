@@ -20,8 +20,8 @@ class OfferDetailSerializer(serializers.ModelSerializer):
 class OfferSerializer(serializers.ModelSerializer):
     user              = serializers.PrimaryKeyRelatedField(read_only=True)
     details           = OfferDetailSerializer(many=True)
-    min_price         = serializers.SerializerMethodField()
-    min_delivery_time = serializers.SerializerMethodField()
+    min_price         = serializers.ReadOnlyField()
+    min_delivery_time = serializers.ReadOnlyField()
 
     class Meta:
         model = Offer
@@ -31,12 +31,6 @@ class OfferSerializer(serializers.ModelSerializer):
             'details','min_price','min_delivery_time',
         ]
         read_only_fields = ['user','created_at','updated_at']
-
-    def get_min_price(self, obj):
-        return obj.details.aggregate(models.Min('price'))['price__min'] or 0
-
-    def get_min_delivery_time(self, obj):
-        return obj.details.aggregate(models.Min('delivery_time_in_days'))['delivery_time_in_days__min'] or 0
 
     def create(self, validated_data):
         details_data = validated_data.pop('details')
@@ -73,13 +67,7 @@ class OfferCreateResponseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Offer
-        fields = [
-            'id',
-            'title',
-            'image',
-            'description',
-            'details',
-        ]
+        fields = ['id', 'title', 'image', 'description', 'details',]
 
 class OfferDetailURLSerializer(serializers.ModelSerializer):
     url = serializers.SerializerMethodField()
@@ -96,34 +84,43 @@ class OfferDetailURLSerializer(serializers.ModelSerializer):
 
 class OfferRetrieveSerializer(serializers.ModelSerializer):
     details = OfferDetailURLSerializer(many=True, read_only=True)
-    min_price         = serializers.SerializerMethodField()
-    min_delivery_time = serializers.SerializerMethodField()
+    min_price         = serializers.ReadOnlyField()
+    min_delivery_time = serializers.ReadOnlyField()
 
     class Meta:
         model = Offer
         fields = [
             'id', 'user', 'title', 'image', 'description',
-            'created_at', 'updated_at',
-            'details',
+            'created_at', 'updated_at', 'details',
             'min_price', 'min_delivery_time',
         ]
         read_only_fields = fields
-
-    def get_min_price(self, obj):
-        return obj.details.aggregate(models.Min('price'))['price__min'] or 0
-
-    def get_min_delivery_time(self, obj):
-        return obj.details.aggregate(models.Min('delivery_time_in_days'))['delivery_time_in_days__min'] or 0
-    
+  
 class OfferPatchResponseSerializer(serializers.ModelSerializer):
     details = OfferDetailSerializer(many=True, read_only=True)
 
     class Meta:
         model = Offer
+        fields = ['id', 'title', 'image', 'description', 'details']
+
+class OfferListSerializer(serializers.ModelSerializer):
+    details            = OfferDetailURLSerializer(many=True, read_only=True)
+    min_price          = serializers.ReadOnlyField()
+    min_delivery_time  = serializers.ReadOnlyField()
+    user_details       = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Offer
         fields = [
-            'id',
-            'title',
-            'image',
-            'description',
-            'details',
+            'id', 'user', 'title', 'image', 'description',
+            'created_at', 'updated_at', 'details',
+            'min_price', 'min_delivery_time', 'user_details',
         ]
+        read_only_fields = fields
+
+    def get_user_details(self, obj):
+        return {
+            'first_name': obj.user.first_name,
+            'last_name':  obj.user.last_name,
+            'username':   obj.user.username,
+        }

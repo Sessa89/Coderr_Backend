@@ -9,7 +9,16 @@ from profiles_app.models import Profile
 from offers_app.models import Offer, OfferDetail
 
 class OffersAPITests(APITestCase):
+    """
+    Test suite covering all Offer endpoints:
+      - Listing & filtering
+      - Creation (business only)
+      - Retrieval (auth required)
+      - Update & delete permissions (owner only)
+      - OfferDetail retrieval (public)
+    """
     def setUp(self):
+        """Initialize test users, tokens, an offer, and an offer detail."""
         self.customer_user = User.objects.create_user(
             username='cust', email='cust@test.de', password='pw123456'
         )
@@ -41,6 +50,10 @@ class OffersAPITests(APITestCase):
         )
 
     def test_list_offers_no_auth_needed(self):
+        """
+        GET /offers/ should return 200 OK for anonymous users
+        and include min_price and min_delivery_time in the response.
+        """
         url = reverse('offer-list-create')
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
@@ -52,6 +65,11 @@ class OffersAPITests(APITestCase):
         self.assertEqual(data['min_delivery_time'], 3)
 
     def test_filter_by_creator(self):
+        """
+        GET /offers/?creator_id=<id> should filter offers by the creator's user ID.
+        When filtering by the business user's ID, one offer is returned;
+        when filtering by the customer user's ID, zero offers are returned.
+        """
         url = reverse('offer-list-create') + f'?user__id={self.business_user.id}'
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
@@ -63,6 +81,10 @@ class OffersAPITests(APITestCase):
         self.assertEqual(resp2.data['count'], 0)
 
     def test_create_offer_as_business(self):
+        """
+        POST /offers/ as a business user should succeed with HTTP 201 CREATED.
+        Verifies that the new Offer and its nested OfferDetail are persisted.
+        """
         url = reverse('offer-list-create')
         payload = {
             "title": "New Offer",
@@ -87,6 +109,10 @@ class OffersAPITests(APITestCase):
         self.assertEqual(new.details.count(), 1)
 
     def test_create_offer_as_customer_forbidden(self):
+        """
+        POST /offers/ as a customer user should be forbidden with HTTP 403 FORBIDDEN.
+        Ensures only business users can create offers.
+        """
         url = reverse('offer-list-create')
         payload = {"title":"F","description":"D","details":[]}
         self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.cust_token.key}')
@@ -94,6 +120,10 @@ class OffersAPITests(APITestCase):
         self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_retrieve_offer_requires_auth(self):
+        """
+        GET /offers/<pk>/ should return 401 UNAUTHORIZED for anonymous users,
+        and 200 OK with the correct offer data for authenticated users.
+        """
         url = reverse('offer-detail', kwargs={'pk': self.offer.id})
         resp_anon = self.client.get(url)
         self.assertEqual(resp_anon.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -104,6 +134,10 @@ class OffersAPITests(APITestCase):
         self.assertEqual(resp.data['id'], self.offer.id)
 
     def test_patch_offer_owner_vs_other(self):
+        """
+        PATCH /offers/<pk>/ should be forbidden for non-owners (HTTP 403),
+        and allowed for the owner (HTTP 200), updating the title correctly.
+        """
         url = reverse('offer-detail', kwargs={'pk': self.offer.id})
     
         self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.cust_token.key}')
@@ -117,6 +151,10 @@ class OffersAPITests(APITestCase):
         self.assertEqual(self.offer.title, "Updated")
 
     def test_delete_offer_owner_vs_other(self):
+        """
+        DELETE /offers/<pk>/ should be forbidden for non-owners (HTTP 403),
+        and allowed for the owner (HTTP 204), removing the offer from the database.
+        """
         url = reverse('offer-detail', kwargs={'pk': self.offer.id})
         
         self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.cust_token.key}')
@@ -129,6 +167,10 @@ class OffersAPITests(APITestCase):
         self.assertFalse(Offer.objects.filter(id=self.offer.id).exists())
 
     def test_get_offerdetail_no_auth(self):
+        """
+        GET /offer-details/<pk>/ should return 200 OK without authentication
+        and include the correct offer_type and ID in the response.
+        """
         url = reverse('offerdetail-detail', kwargs={'pk': self.detail.id})
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, status.HTTP_200_OK)

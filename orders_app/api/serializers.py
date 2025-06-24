@@ -2,6 +2,12 @@ from rest_framework import serializers
 from ..models import Order
 
 class OrderSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Order objects.
+
+    - Read-only fields include customer_user, business_user, and all offer_detail-derived fields.
+    - Write-only field 'offer_detail_id' is used to select the related OfferDetail.
+    """
     customer_user = serializers.PrimaryKeyRelatedField(read_only=True)
     business_user = serializers.PrimaryKeyRelatedField(read_only=True)
 
@@ -38,6 +44,12 @@ class OrderSerializer(serializers.ModelSerializer):
         ]
 
     def create(self, validated_data):
+        """
+        Create a new Order instance.
+
+        - Automatically assigns the requesting user as the customer_user.
+        - Determines business_user from the offer_detail's related Offer.
+        """
         user = self.context['request'].user
         detail = validated_data.pop('offer_detail')
         
@@ -47,6 +59,9 @@ class OrderSerializer(serializers.ModelSerializer):
         return order
 
 class OrderStatusSerializer(serializers.ModelSerializer):
+    """
+    Serializer for updating only the status field of an Order.
+    """
     class Meta:
         model = Order
         fields = ['status']

@@ -5,6 +5,10 @@ from rest_framework.validators import UniqueValidator
 from profiles_app.models import Profile
 
 class RegistrationSerializer(serializers.ModelSerializer):
+    """
+    Serializer for registering a new user.
+    Ensures unique username and email, matches passwords, and creates a Profile.
+    """
     username = serializers.CharField(
         max_length=150,
         validators=[
@@ -31,6 +35,9 @@ class RegistrationSerializer(serializers.ModelSerializer):
         fields = ['username', 'email', 'password', 'repeated_password', 'type']
 
     def validate(self, data):
+        """
+        Check that password and repeated_password match.
+        """
         if data['password'] != data.pop('repeated_password'):
             raise serializers.ValidationError(
                 {'password': 'Passwords do not match.'})
@@ -38,6 +45,9 @@ class RegistrationSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
+        """
+        Create a new User and associated Profile with the given type.
+        """
         user_type = validated_data.pop('type')
         account = User.objects.create_user(
             username=validated_data['username'],
@@ -49,10 +59,18 @@ class RegistrationSerializer(serializers.ModelSerializer):
         return account
 
 class LoginSerializer(serializers.Serializer):
+    """
+    Serializer for logging in an existing user.
+    Validates that the username exists and password is correct.
+    """
     username = serializers.CharField()
     password = serializers.CharField(write_only=True)
 
     def validate(self, attrs):
+        """
+        Authenticate the user by username and password.
+        Raises ValidationError if credentials are invalid.
+        """
         username = attrs.get('username')
         password = attrs.get('password')
 

@@ -8,6 +8,11 @@ from rest_framework import status
 from .serializers import RegistrationSerializer, LoginSerializer
 
 class RegistrationView(APIView):
+    """
+    API endpoint for user registration.
+    Accepts POST requests with username, email, password, repeated_password, and type.
+    Returns a token and user details upon successful creation.
+    """
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -28,6 +33,10 @@ class RegistrationView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class CustomLoginView(ObtainAuthToken):
+    """
+    API endpoint for user login.
+    Accepts POST with username and password, returns auth token and user info.
+    """
     serializer_class = LoginSerializer
 
     def post(self, request):

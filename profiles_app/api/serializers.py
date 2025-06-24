@@ -2,6 +2,11 @@ from rest_framework import serializers
 from ..models import Profile
 
 class ProfileSerializer(serializers.ModelSerializer):
+    """
+    Serializer for full Profile details, supporting retrieve and update.
+
+    Exposes user-related fields as read-only.
+    """
     username = serializers.CharField(source='user.username', read_only=True)
     email    = serializers.CharField(source='user.email',    read_only=True)
 
@@ -15,6 +20,9 @@ class ProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ['user','type','created_at']
 
 class BusinessProfileListSerializer(serializers.ModelSerializer):
+    """
+    Serializer for listing business profiles with limited fields.
+    """
     username = serializers.CharField(source='user.username', read_only=True)
 
     class Meta:
@@ -25,6 +33,9 @@ class BusinessProfileListSerializer(serializers.ModelSerializer):
         ]
 
 class CustomerProfileListSerializer(serializers.ModelSerializer):
+    """
+    Serializer for listing customer profiles with minimal fields.
+    """
     username = serializers.CharField(source='user.username', read_only=True)
 
     class Meta:

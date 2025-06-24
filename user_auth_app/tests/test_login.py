@@ -4,6 +4,9 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 class LoginTests(APITestCase):
+    """
+    Test cases for user login functionality.
+    """
     def setUp(self):
         self.url = reverse('login')
 
@@ -17,6 +20,9 @@ class LoginTests(APITestCase):
         )
 
     def test_login_success(self):
+        """
+        Valid credentials should return HTTP 200 and proper fields.
+        """
         payload = {
             "username": self.username,
             "password": self.password
@@ -31,6 +37,9 @@ class LoginTests(APITestCase):
         self.assertEqual(response.data['user_id'], self.user.id)
 
     def test_login_invalid_password(self):
+        """
+        Incorrect password should return HTTP 400.
+        """
         payload = {
             "username": self.username,
             "password": "wrongpass"
@@ -39,6 +48,9 @@ class LoginTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_login_nonexistent_user(self):
+        """
+        Unknown username should return HTTP 400.
+        """
         payload = {
             "username": "Jane Doe",
             "password": "forgotpw"
@@ -47,5 +59,8 @@ class LoginTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_login_missing_fields(self):
+        """
+        Missing username or password should return HTTP 400.
+        """
         response = self.client.post(self.url, {}, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

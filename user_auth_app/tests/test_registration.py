@@ -5,10 +5,16 @@ from rest_framework.test import APITestCase
 from profiles_app.models import Profile
 
 class RegistrationTests(APITestCase):
+    """
+    Test cases for user registration functionality.
+    """
     def setUp(self):
         self.url = reverse('registration')
 
     def test_registration_success(self):
+        """
+        Valid signup data returns HTTP 201 and creates User and Profile.
+        """
         payload = {
             "username": "Max Mustermann",
             "email": "max-mustermann@test.de",
@@ -32,6 +38,9 @@ class RegistrationTests(APITestCase):
         self.assertEqual(profile.type, payload['type'])
 
     def test_registration_password_mismatch(self):
+        """
+        Mismatched passwords should return HTTP 400 with error on 'password'.
+        """
         payload={
             "username": "Max Mustermann",
             "email": "max-mustermann@test.de",
@@ -45,6 +54,9 @@ class RegistrationTests(APITestCase):
         self.assertIn('password', response.data)
 
     def test_registration_duplicate_username(self):
+        """
+        Duplicate username should return HTTP 400 with error on 'username'.
+        """
         User.objects.create_user(username='John Doe', email='john_doe@test.de', password='pw123456')
         payload = {
             "username": "John Doe",
@@ -59,6 +71,9 @@ class RegistrationTests(APITestCase):
         self.assertIn('username', response.data)
 
     def test_registration_duplicate_email(self):
+        """
+        Duplicate email should return HTTP 400 with error on 'email'.
+        """
         User.objects.create_user(username='Max Mustermann', email='max-mustermann@test.de', password='strongpass123')
         payload = {
             "username": "John Doe",

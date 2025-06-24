@@ -9,7 +9,13 @@ from offers_app.models import Offer, OfferDetail
 from orders_app.models import Order
 
 class OrdersAPITests(APITestCase):
+    """
+    End-to-end API tests for Order endpoints.
+    """
     def setUp(self):
+        """
+        Create a business user, a customer user, an offer with details, and one initial order.
+        """
         self.biz = User.objects.create_user('biz', 'biz@test.de', 'pw123')
         Profile.objects.create(user=self.biz, type='business')
         self.biz_token = Token.objects.create(user=self.biz)
@@ -41,6 +47,9 @@ class OrdersAPITests(APITestCase):
         )
 
     def test_list_orders_authenticated(self):
+        """
+        Authenticated users (customer or business) can list their orders.
+        """
         url = reverse('order-list')
         
         self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.cust_token.key}')
@@ -55,11 +64,17 @@ class OrdersAPITests(APITestCase):
         self.assertEqual(len(resp2.data), 1)
 
     def test_list_orders_unauthenticated(self):
+        """
+        Unauthenticated requests should be denied.
+        """
         url = reverse('order-list')
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_create_order_as_customer(self):
+        """
+        Customers may create new orders for an existing offer detail.
+        """
         url = reverse('order-list')
         payload = {'offer_detail': self.detail.id}
         self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.cust_token.key}')
@@ -72,6 +87,9 @@ class OrdersAPITests(APITestCase):
         self.assertEqual(resp.data['business_user'], self.biz.id)
 
     def test_create_order_as_business_forbidden(self):
+        """
+        Business users must not be allowed to create orders.
+        """
         url = reverse('order-list')
         payload = {'offer_detail': self.detail.id}
         self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.biz_token.key}')
@@ -79,6 +97,9 @@ class OrdersAPITests(APITestCase):
         self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_retrieve_order(self):
+        """
+        Only the customer or business user may retrieve an order.
+        """
         url = reverse('order-detail', kwargs={'pk': self.order.id})
         
         resp0 = self.client.get(url)
@@ -97,6 +118,9 @@ class OrdersAPITests(APITestCase):
         self.assertEqual(resp2.data['id'], self.order.id)
 
     def test_patch_order_status(self):
+        """
+        Only the business user may update the order status.
+        """
         url = reverse('order-detail', kwargs={'pk': self.order.id})
         
         self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.cust_token.key}')
@@ -110,6 +134,9 @@ class OrdersAPITests(APITestCase):
         self.assertEqual(self.order.status, 'completed')
 
     def test_delete_order_only_staff(self):
+        """
+        Only staff users may delete an order.
+        """
         url = reverse('order-detail', kwargs={'pk': self.order.id})
         
         self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.biz_token.key}')
@@ -124,6 +151,9 @@ class OrdersAPITests(APITestCase):
         self.assertFalse(Order.objects.filter(id=self.order.id).exists())
 
     def test_order_count_endpoints(self):
+        """
+        Verify the in-progress and completed order count endpoints for a business user.
+        """
         Order.objects.create(
             customer_user=self.cust,
             business_user=self.biz,

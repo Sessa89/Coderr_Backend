@@ -7,7 +7,13 @@ from rest_framework.authtoken.models import Token
 from profiles_app.models import Profile
 
 class ProfilesAPITests(APITestCase):
+    """
+    TestCase for Profiles API ensuring CRUD operations and permissions.
+    """
     def setUp(self):
+        """
+        Create customer and business users and their profiles, along with auth tokens.
+        """
         self.customer_user = User.objects.create_user(
             username='Customer 1', email='customer1@test.de', password='customerpw'
         )
@@ -29,6 +35,9 @@ class ProfilesAPITests(APITestCase):
         self.business_token = Token.objects.create(user=self.business_user)
 
     def test_get_own_profile(self):
+        """
+        Authenticated user retrieves their own profile.
+        """
         url = reverse('profile-detail', kwargs={'pk': self.customer_profile.pk})
         self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.customer_token.key}')
         resp = self.client.get(url)
@@ -37,6 +46,9 @@ class ProfilesAPITests(APITestCase):
         self.assertEqual(resp.data['type'], 'customer')
 
     def test_cannot_get_other_profile(self):
+        """
+        Customer cannot retrieve a business user's profile.
+        """
         url = reverse('profile-detail', kwargs={'pk': self.business_profile.pk})
         self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.customer_token.key}')
         resp = self.client.get(url)
@@ -44,6 +56,9 @@ class ProfilesAPITests(APITestCase):
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_patch_own_profile(self):
+        """
+        Business user updates their own profile successfully.
+        """
         url = reverse('profile-detail', kwargs={'pk': self.business_profile.pk})
         self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.business_token.key}')
         payload = {
@@ -61,6 +76,9 @@ class ProfilesAPITests(APITestCase):
         self.assertEqual(self.business_profile.location, "Hamburg")
 
     def test_list_business_profiles(self):
+        """
+        List endpoint returns only business profiles to an authenticated user.
+        """
         url = reverse('business-profiles')
         self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.customer_token.key}')
         resp = self.client.get(url)
@@ -70,6 +88,9 @@ class ProfilesAPITests(APITestCase):
         self.assertEqual(resp.data[0]['user'], self.business_user.id)
 
     def test_list_customer_profiles(self):
+        """
+        List endpoint returns only customer profiles to an authenticated user.
+        """
         url = reverse('customer-profiles')
         self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.business_token.key}')
         resp = self.client.get(url)
@@ -79,6 +100,9 @@ class ProfilesAPITests(APITestCase):
         self.assertEqual(resp.data[0]['type'], 'customer')
 
     def test_unauthenticated_access(self):
+        """
+        All endpoints require authentication; unauthenticated access should fail.
+        """
         urls = [
             reverse('profile-detail',      kwargs={'pk': self.customer_profile.pk}),
             reverse('business-profiles'),

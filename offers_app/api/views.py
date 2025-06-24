@@ -15,6 +15,12 @@ from .paginations import OfferPagination
 from .filters import OfferFilter
 
 class OfferListCreateView(generics.ListCreateAPIView):
+    """
+    GET:
+      List all offers (with filtering, search, ordering, pagination).
+    POST:
+      Create a new offer; only business users may create.
+    """
     queryset = (Offer.objects
                 .prefetch_related('details')
                 .annotate(
@@ -39,6 +45,10 @@ class OfferListCreateView(generics.ListCreateAPIView):
         return OfferListSerializer
 
     def create(self, request, *args, **kwargs):
+        """
+        Override to use the full OfferSerializer for validation,
+        then return the create-response serializer.
+        """
         full_serializer = OfferSerializer(data=request.data, context={'request': request})
         full_serializer.is_valid(raise_exception=True)
         self.perform_create(full_serializer)
@@ -51,6 +61,14 @@ class OfferListCreateView(generics.ListCreateAPIView):
         serializer.save()
 
 class OfferRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    GET:
+      Retrieve a single offer (must be authenticated).
+    PATCH/PUT:
+      Update an offer (owner only).
+    DELETE:
+      Delete an offer (owner only).
+    """
     queryset = Offer.objects.prefetch_related('details').all()
     permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
 
@@ -60,6 +78,9 @@ class OfferRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         return OfferSerializer
     
     def update(self, request, *args, **kwargs):
+        """
+        Override to handle nested details and return a patch-response serializer.
+        """
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
 
@@ -82,6 +103,10 @@ class OfferRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         serializer.save()
 
 class OfferDetailRetrieveView(generics.RetrieveAPIView):
+    """
+    GET:
+      Retrieve a single OfferDetail by ID. Public endpoint.
+    """
     queryset = OfferDetail.objects.all()
     serializer_class = OfferDetailSerializer
     permission_classes = []

@@ -69,7 +69,15 @@ class OfferRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     DELETE:
       Delete an offer (owner only).
     """
-    queryset = Offer.objects.prefetch_related('details').all()
+    queryset = (
+        Offer.objects
+            .prefetch_related('details')
+            .annotate(
+                min_price=Min('details__price'),
+                min_delivery_time=Min('details__delivery_time_in_days')
+            )
+            .all()
+    )
     permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
 
     def get_serializer_class(self):

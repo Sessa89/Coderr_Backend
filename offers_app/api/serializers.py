@@ -114,9 +114,11 @@ class OfferRetrieveSerializer(serializers.ModelSerializer):
     Serializer for retrieving a single Offer,
     returning detail URLs instead of full nested details.
     """
-    details = OfferDetailURLSerializer(many=True, read_only=True)
-    min_price         = serializers.ReadOnlyField()
-    min_delivery_time = serializers.ReadOnlyField()
+    created_at         = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%SZ")
+    updated_at         = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%SZ")
+    details            = OfferDetailURLSerializer(many=True, read_only=True)
+    min_price          = serializers.ReadOnlyField()
+    min_delivery_time  = serializers.ReadOnlyField()
 
     class Meta:
         model = Offer
@@ -143,6 +145,8 @@ class OfferListSerializer(serializers.ModelSerializer):
     Serializer for listing Offer instances,
     including user summary fields and detail URLs.
     """
+    created_at         = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%SZ")
+    updated_at         = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%SZ")
     details            = OfferDetailURLSerializer(many=True, read_only=True)
     min_price          = serializers.ReadOnlyField()
     min_delivery_time  = serializers.ReadOnlyField()

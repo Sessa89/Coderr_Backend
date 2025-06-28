@@ -9,6 +9,10 @@ class OfferDetailSerializer(serializers.ModelSerializer):
     """
     Serializer for OfferDetail, used for nested create/update and full detail view.
     """
+    revisions = serializers.IntegerField(min_value=1)
+    delivery_time_in_days = serializers.IntegerField(min_value=1)
+    price = serializers.FloatField(min_value=0)
+
     class Meta:
         model = OfferDetail
         fields = [
@@ -65,24 +69,26 @@ class OfferSerializer(serializers.ModelSerializer):
         instance.save()
 
         if details_data is not None:
-            existing = {d.id: d for d in instance.details.all()}
+            valid_ids = []
+
             for det in details_data:
-                det_id = det.get('id', None)
-                if det_id and det_id in existing:
-                    obj = existing.pop(det_id)
-                    for k,v in det.items():
-                        if k!='id':
+                det_id = det.get('id')
+                if det_id:
+                    if instance.details.filter(id=det_id).exists():
+                        obj = OfferDetail.objects.get(id=det_id)
+                        for k,v in det.items():
                             setattr(obj, k, v)
-                    obj.save()
+                        obj.save()
+                        valid_ids.append(det_id)
+                    else:
+                        raise serializers.ValidationError(
+                        {'details': f"Invalid ID: {det_id}"}
+                    )
                 else:
-                    OfferDetail.objects.create(offer=instance, **det)
-            for obj in existing.values():
-                try:
-                    obj.delete()
-                except ProtectedError as e:
-                    raise serializers.ValidationError({
-                        'details': f"Cannot delete detail #{obj.pk}: {str(e)}"
-                    })
+                    new_obj = OfferDetail.objects.create(offer=instance, **det)
+                    valid_ids.append(new_obj.id)
+
+            instance.details.exclude(id__in=valid_ids).delete()
         return instance
     
 class OfferCreateResponseSerializer(serializers.ModelSerializer):
@@ -140,7 +146,7 @@ class OfferPatchResponseSerializer(serializers.ModelSerializer):
     Serializer for patch requests on Offer,
     returning full nested details on response.
     """
-    details = OfferDetailSerializer(many=True)
+    details = OfferDetailSerializer(many=True, source='details.all')
 
     class Meta:
         model = Offer
@@ -151,8 +157,8 @@ class OfferListSerializer(serializers.ModelSerializer):
     Serializer for listing Offer instances,
     including user summary fields and detail URLs.
     """
-    created_at         = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%SZ")
-    updated_at         = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%SZ")
+    created_at         = serializers.DateTimeField(format="iso")
+    updated_at         = serializers.DateTimeField(format="iso")
     details            = OfferDetailURLSerializer(many=True, read_only=True)
     min_price          = serializers.ReadOnlyField()
     min_delivery_time  = serializers.ReadOnlyField()

@@ -60,6 +60,18 @@ class OfferListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save()
 
+    def filter_queryset(self, queryset):
+        queryset = super().filter_queryset(queryset)
+        min_price = self.request.query_params.get('min_price')
+        max_delivery = self.request.query_params.get('max_delivery_time')
+        
+        if min_price:
+            queryset = queryset.filter(min_price__gte=float(min_price))
+        if max_delivery:
+            queryset = queryset.filter(min_delivery_time__lte=int(max_delivery))
+            
+        return queryset
+
 class OfferRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     """
     GET:
@@ -117,4 +129,4 @@ class OfferDetailRetrieveView(generics.RetrieveAPIView):
     """
     queryset = OfferDetail.objects.all()
     serializer_class = OfferDetailSerializer
-    permission_classes = []
+    permission_classes = [IsAuthenticated]

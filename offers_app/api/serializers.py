@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import ProtectedError
 from django.urls import reverse
 from rest_framework import serializers
 
@@ -76,7 +77,12 @@ class OfferSerializer(serializers.ModelSerializer):
                 else:
                     OfferDetail.objects.create(offer=instance, **det)
             for obj in existing.values():
-                obj.delete()
+                try:
+                    obj.delete()
+                except ProtectedError as e:
+                    raise serializers.ValidationError({
+                        'details': f"Cannot delete detail #{obj.pk}: {str(e)}"
+                    })
         return instance
     
 class OfferCreateResponseSerializer(serializers.ModelSerializer):
@@ -134,7 +140,7 @@ class OfferPatchResponseSerializer(serializers.ModelSerializer):
     Serializer for patch requests on Offer,
     returning full nested details on response.
     """
-    details = OfferDetailSerializer(many=True, read_only=True)
+    details = OfferDetailSerializer(many=True)
 
     class Meta:
         model = Offer

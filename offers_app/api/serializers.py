@@ -50,28 +50,6 @@ class OfferSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['user','created_at','updated_at']
 
-    def validate_details(self, value):
-        """
-        Ensure exactly 3 details with required types are present
-        """
-        if len(value) != 3:
-            raise serializers.ValidationError("Offer must have exactly 3 details")
-        
-        types_present = {det['offer_type'] for det in value}
-        required_types = {'basic', 'standard', 'premium'}
-        
-        if types_present != required_types:
-            missing = required_types - types_present
-            extra = types_present - required_types
-            errors = []
-            if missing:
-                errors.append(f"Missing types: {', '.join(missing)}")
-            if extra:
-                errors.append(f"Invalid types: {', '.join(extra)}")
-            raise serializers.ValidationError("; ".join(errors))
-        
-        return value
-
     def create(self, validated_data):
         """
         Override to handle creating nested OfferDetail instances after

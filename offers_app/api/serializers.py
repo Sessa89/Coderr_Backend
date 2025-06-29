@@ -82,22 +82,24 @@ class OfferSerializer(serializers.ModelSerializer):
                 det_id = det.get('id')
                 offer_type = det.get('offer_type')
 
-                if det_id and det_id in existing:
-                    obj = existing[det_id]
-                    if obj.offer_type == offer_type:
-                        for k,v in det.items():
-                            if k != 'id':
-                                setattr(obj, k, v)
-                        obj.save()
-                        valid_ids.append(det_id)
+                if det_id and det_id in existing and existing[det_id].offer_type == offer_type:
+                    obj = existing.pop(det_id)
+                    for k,v in det.items():
+                        if k != 'id':
+                            setattr(obj, k, v)
+                    obj.save()
+                    valid_ids.append(det_id)
                 else:
-                    if offer_type in [choice[0] for choice in OfferDetail.OFFER_TYPES]:
-                        new_obj = OfferDetail.objects.create(offer=instance, **det)
-                        valid_ids.append(new_obj.id)
+                    new_obj = OfferDetail.objects.create(offer=instance, **det)
+                    valid_ids.append(new_obj.id)
 
             for obj in existing.values():
-                if obj.id not in valid_ids:
+                try:
                     obj.delete()
+                except ProtectedError as e:
+                    raise serializers.ValidationError({
+                        'details': f"Cannot delete detail #{obj.pk}: {str(e)}"
+                    })
 
         instance.refresh_from_db()
         return instance

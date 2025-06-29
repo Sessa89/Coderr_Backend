@@ -113,8 +113,10 @@ class OfferRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         full_serializer.is_valid(raise_exception=True)
         self.perform_update(full_serializer)
 
+        updated_instance = self.get_object()
+
         out_ser = OfferPatchResponseSerializer(
-            full_serializer.instance,
+            updated_instance,
             context={'request': request}
         )
         return Response(out_ser.data, status=status.HTTP_200_OK)

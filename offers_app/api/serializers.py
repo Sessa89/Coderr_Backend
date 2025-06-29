@@ -12,6 +12,12 @@ class OfferDetailSerializer(serializers.ModelSerializer):
     revisions = serializers.IntegerField(min_value=1)
     delivery_time_in_days = serializers.IntegerField(min_value=1)
     price = serializers.FloatField(min_value=0)
+    offer_type = serializers.ChoiceField(
+        choices=OfferDetail.OFFER_TYPES,
+        error_messages = {
+            'invalid_choice': 'Invalid offer type. Allowed: basic, standard, premium'
+        }
+    )
 
     class Meta:
         model = OfferDetail
@@ -44,6 +50,28 @@ class OfferSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['user','created_at','updated_at']
 
+    def validate_details(self, value):
+        """
+        Ensure exactly 3 details with required types are present
+        """
+        if len(value) != 3:
+            raise serializers.ValidationError("Offer must have exactly 3 details")
+        
+        types_present = {det['offer_type'] for det in value}
+        required_types = {'basic', 'standard', 'premium'}
+        
+        if types_present != required_types:
+            missing = required_types - types_present
+            extra = types_present - required_types
+            errors = []
+            if missing:
+                errors.append(f"Missing types: {', '.join(missing)}")
+            if extra:
+                errors.append(f"Invalid types: {', '.join(extra)}")
+            raise serializers.ValidationError("; ".join(errors))
+        
+        return value
+
     def create(self, validated_data):
         """
         Override to handle creating nested OfferDetail instances after
@@ -69,26 +97,31 @@ class OfferSerializer(serializers.ModelSerializer):
         instance.save()
 
         if details_data is not None:
+            existing = {d.id: d for d in instance.details.all()}
             valid_ids = []
 
             for det in details_data:
                 det_id = det.get('id')
-                if det_id:
-                    if instance.details.filter(id=det_id).exists():
-                        obj = OfferDetail.objects.get(id=det_id)
+                offer_type = det.get('offer_type')
+
+                if det_id and det_id in existing:
+                    obj = existing[det_id]
+                    if obj.offer_type == offer_type:
                         for k,v in det.items():
-                            setattr(obj, k, v)
+                            if k != 'id':
+                                setattr(obj, k, v)
                         obj.save()
                         valid_ids.append(det_id)
-                    else:
-                        raise serializers.ValidationError(
-                        {'details': f"Invalid ID: {det_id}"}
-                    )
                 else:
-                    new_obj = OfferDetail.objects.create(offer=instance, **det)
-                    valid_ids.append(new_obj.id)
+                    if offer_type in [choice[0] for choice in OfferDetail.OFFER_TYPES]:
+                        new_obj = OfferDetail.objects.create(offer=instance, **det)
+                        valid_ids.append(new_obj.id)
 
-            instance.details.exclude(id__in=valid_ids).delete()
+            for obj in existing.values():
+                if obj.id not in valid_ids:
+                    obj.delete()
+
+        instance.refresh_from_db()
         return instance
     
 class OfferCreateResponseSerializer(serializers.ModelSerializer):
@@ -146,11 +179,15 @@ class OfferPatchResponseSerializer(serializers.ModelSerializer):
     Serializer for patch requests on Offer,
     returning full nested details on response.
     """
-    details = OfferDetailSerializer(many=True, source='details.all')
+    details = serializers.SerializerMethodField()
 
     class Meta:
         model = Offer
         fields = ['id', 'title', 'image', 'description', 'details']
+
+    def get_details(self, obj):
+        details = obj.details.all().order_by('offer_type')
+        return OfferDetailSerializer(details, many=True).data
 
 class OfferListSerializer(serializers.ModelSerializer):
     """

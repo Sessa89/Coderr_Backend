@@ -6,6 +6,52 @@ This repository contains the Django REST Framework–based backend for **Coderr*
 
 ---
 
+## Getting Started
+
+### Backend Setup
+
+1. **Create a virtuel environment**
+    ```bash
+    python3 -m venv env
+    ```
+    ```bash
+    source env/bin/activate   # macOS/Linux
+    ```
+    ### or
+    ```bash
+    .\env\Scripts\Activate.ps1  # Windows PowerShell
+    ```
+
+2. **Install Python dependencies**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+3. **Optional: Create a superuser**
+    ```bash
+    python manage.py createsuperuser
+    ```
+
+4. **Run the backend server**
+    ```bash
+    python manage.py runserver
+    ```
+
+    The API will be available at "http://127.0.0.1:8000"
+
+---
+
+### Frontend Setup ("https://github.com/Sessa89/Coderr_Frontend")
+
+1. **Open the frontend folder**  
+    In your code editor (e.g., VS Code), open the frontend directory.
+
+2. **Start a local static server**
+    - Right-click on index.html (inside frontend) and select "Open with Live Server" if you have VS Code Live Server installed
+    - The frontend will run at "http://127.0.0.1:5500/"
+
+---
+
 ## Features
 
 - **User Registration & Login**  
@@ -33,39 +79,5 @@ This repository contains the Django REST Framework–based backend for **Coderr*
 
 - **Base Info**  
   - Public endpoint reporting total reviews, average rating, total businesses & offers
-
----
-
-## Getting Started
-
-### Backend Setup
-
-1. **Create a virtuel environment**
-    python3 -m venv env
-    source env/bin/activate   # macOS/Linux
-    # or
-    .\env\Scripts\Activate.ps1  # Windows PowerShell
-
-2. **Install Python dependencies**
-    pip install -r requirements.txt
-
-3. **Optional: Create a superuser**
-    python manage.py createsuperuser
-
-4. **Run the backend server**
-    python manage.py runserver
-
-    The API will be available at "http://127.0.0.1:8000"
-
----
-
-### Frontend Setup ("https://github.com/Sessa89/Coderr_Frontend")
-
-1. **Open the frontend folder**  
-    In your code editor (e.g., VS Code), open the frontend directory.
-
-2. **Start a local static server**
-    - Right-click on index.html (inside frontend) and select "Open with Live Server" if you have VS Code Live Server installed
-    - The frontend will run at "http://127.0.0.1:5500/"
 
 ---

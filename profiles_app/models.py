@@ -33,7 +33,7 @@ class Profile(models.Model):
     file = models.FileField(upload_to='uploads/profiles/', blank=True, null=True)
     location = models.CharField(max_length=100, blank=True)
     tel = models.CharField(max_length=20, blank=True)
-    description = models.CharField(blank=True)
+    description = models.CharField(max_length=255, blank=True)
     working_hours = models.CharField(max_length=100, blank=True)
     type = models.CharField(max_length=10, choices=TYPE_CHOICES)
     email = models.EmailField(max_length=255)

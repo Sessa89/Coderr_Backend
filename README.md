@@ -27,7 +27,7 @@ This repository contains the Django REST Framework–based backend for **Coderr*
     pip install -r requirements.txt
     ```
 
-3. **Apply database migrations
+3. **Apply database migrations**
     ```bash
     python manage.py makemigrations
     ```

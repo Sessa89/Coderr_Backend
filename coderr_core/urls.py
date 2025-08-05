@@ -24,6 +24,10 @@ from orders_app.api.views import OrderListCreateView, OrderRetrieveUpdateDestroy
 from reviews_app.api.views import ReviewListCreateView, ReviewRetrieveUpdateDestroyView
 from coderr_core.api.views import BaseInfoView
 
+from django.conf.urls.static import static
+from coderr_core import settings
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+
 urlpatterns = [
     path('admin/', admin.site.urls),
 
@@ -47,4 +51,4 @@ urlpatterns = [
     path('api/reviews/<int:pk>/', ReviewRetrieveUpdateDestroyView.as_view(), name='review-detail'),
 
     path('api/base-info/', BaseInfoView.as_view(), name='base-info'),
-]
+] + staticfiles_urlpatterns()

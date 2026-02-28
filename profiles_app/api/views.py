@@ -1,5 +1,6 @@
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
+from django.shortcuts import get_object_or_404
 
 from ..models import Profile
 from .serializers import (
@@ -17,9 +18,13 @@ class ProfileDetailView(generics.RetrieveUpdateAPIView):
       - Must be authenticated.
       - Only the owner can modify their profile.
     """
-    queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
     permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
+
+    def get_object(self):
+        profile = get_object_or_404(Profile, user__pk=self.kwargs["pk"])
+        self.check_object_permissions(self.request, profile)
+        return profile
 
 class BusinessProfileListView(generics.ListAPIView):
     """
